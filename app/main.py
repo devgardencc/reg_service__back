@@ -13,7 +13,7 @@ jinja_env = Environment(loader=FileSystemLoader("app/templates"), autoescape=Tru
 telegram_template = jinja_env.get_template("telegram_msg.j2")
 
 app = FastAPI(title="Registration API devgardencc", version="0.1")
-gs_service = GoogleSheetsService(settings.google_sheets_key_file, settings.sheet_id)
+gs_service = GoogleSheetsService(settings.sheet_id)
 tg_service = TelegramService(
     settings.telegram_bot_token, settings.telegram_chat_id, settings.telegram_thread_id
 )
