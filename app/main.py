@@ -9,7 +9,7 @@ from config import settings
 from service import GoogleSheetsService, TelegramService
 from logger import logger
 
-jinja_env = Environment(loader=FileSystemLoader("templates"), autoescape=True)
+jinja_env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
 telegram_template = jinja_env.get_template("telegram_msg.j2")
 
 app = FastAPI(title="Registration API devgardencc", version="0.1")
