@@ -1,4 +1,5 @@
 from fastapi import BackgroundTasks, FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 
 from fastapi.concurrency import run_in_threadpool
@@ -12,7 +13,30 @@ from app.logger import logger
 jinja_env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
 telegram_template = jinja_env.get_template("telegram_msg.j2")
 
-app = FastAPI(title="Registration API devgardencc", version="0.1")
+is_production = settings.enironment == "production"
+
+app = FastAPI(
+    title="Registration API devgardencc",
+    version="0.1",
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
+    openapi_url=None if is_production else "/openapi.json",
+)
+
+
+allowed_origins = settings.allowed_hosts
+
+if not is_production:
+    allowed_origins.append("*")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
 gs_service = GoogleSheetsService(settings.sheet_id, settings.account)
 tg_service = TelegramService(
     settings.telegram_bot_token, settings.telegram_chat_id, settings.telegram_thread_id
