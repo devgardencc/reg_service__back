@@ -4,16 +4,16 @@ from datetime import datetime, timezone
 from fastapi.concurrency import run_in_threadpool
 from jinja2 import Environment, FileSystemLoader
 
-from scheme import HealthResponse, RegisterRequest, RegisterResponse
-from config import settings
-from service import GoogleSheetsService, TelegramService
-from logger import logger
+from app.scheme import HealthResponse, RegisterRequest, RegisterResponse
+from app.config import settings
+from app.service import GoogleSheetsService, TelegramService
+from app.logger import logger
 
 jinja_env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
 telegram_template = jinja_env.get_template("telegram_msg.j2")
 
 app = FastAPI(title="Registration API devgardencc", version="0.1")
-gs_service = GoogleSheetsService(settings.sheet_id)
+gs_service = GoogleSheetsService(settings.sheet_id, settings.account)
 tg_service = TelegramService(
     settings.telegram_bot_token, settings.telegram_chat_id, settings.telegram_thread_id
 )
@@ -56,14 +56,3 @@ async def register_user(data: RegisterRequest, background_tasks: BackgroundTasks
 
     background_tasks.add_task(tg_service.send_message, message_text)
     return RegisterResponse(name=data.name, created_at=current_time)
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-    )
