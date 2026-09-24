@@ -13,7 +13,7 @@ jinja_env = Environment(loader=FileSystemLoader("app/templates"), autoescape=Tru
 telegram_template = jinja_env.get_template("telegram_msg.j2")
 
 app = FastAPI(title="Registration API devgardencc", version="0.1")
-gs_service = GoogleSheetsService(settings.sheet_id)
+gs_service = GoogleSheetsService(settings.sheet_id, settings.account)
 tg_service = TelegramService(
     settings.telegram_bot_token, settings.telegram_chat_id, settings.telegram_thread_id
 )
@@ -56,14 +56,3 @@ async def register_user(data: RegisterRequest, background_tasks: BackgroundTasks
 
     background_tasks.add_task(tg_service.send_message, message_text)
     return RegisterResponse(name=data.name, created_at=current_time)
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-    )

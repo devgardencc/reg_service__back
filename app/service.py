@@ -1,28 +1,20 @@
+import base64
+import json
+
+import json
 import gspread
 import httpx
-from config import settings
 from logger import logger
 
 
 class GoogleSheetsService:
-    def __init__(self, sheet_id: str):
-        self.sheet = None
+    def __init__(self, sheet_id: str, account_base64: str):
+        self.sheet_id = sheet_id
+        decoded_bytes = base64.b64decode(account_base64)
+        creds_info = json.loads(decoded_bytes.decode("utf-8"))
 
-        credentials = {
-            "type": settings.type,
-            "project_id": settings.project_id,
-            "private_key_id": settings.private_key_id,
-            "private_key": settings.private_key,
-            "client_email": settings.client_email,
-            "client_id": settings.client_id,
-            "auth_uri": settings.auth_uri,
-            "token_uri": settings.token_uri,
-            "auth_provider_x509_cert_url": settings.auth_provider_x509_cert_url,
-            "client_x509_cert_url": settings.client_x509_cert_url,
-            "universe_domain": settings.universe_domain
-        }
         try:
-            gc = gspread.service_account_from_dict(credentials)
+            gc = gspread.service_account_from_dict(creds_info)
             sh = gc.open_by_key(sheet_id)
             self.sheet = sh.sheet1
         except Exception as e:
