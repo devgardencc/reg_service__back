@@ -4,7 +4,7 @@ import json
 import json
 import gspread
 import httpx
-from logger import logger
+from .logger import logger
 
 
 class GoogleSheetsService:

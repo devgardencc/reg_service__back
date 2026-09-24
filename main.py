@@ -4,10 +4,10 @@ from datetime import datetime, timezone
 from fastapi.concurrency import run_in_threadpool
 from jinja2 import Environment, FileSystemLoader
 
-from scheme import HealthResponse, RegisterRequest, RegisterResponse
-from config import settings
-from service import GoogleSheetsService, TelegramService
-from logger import logger
+from app.scheme import HealthResponse, RegisterRequest, RegisterResponse
+from app.config import settings
+from app.service import GoogleSheetsService, TelegramService
+from app.logger import logger
 
 jinja_env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
 telegram_template = jinja_env.get_template("telegram_msg.j2")
