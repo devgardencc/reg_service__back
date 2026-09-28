@@ -1,4 +1,17 @@
-🚀 <b>Новая регистрация!</b>
+📋 <b>Новая заявка на регистрацию</b>
 
-👤 <b>Имя:</b> {{ name }}
-✉️ <b>Тгшечка>:</b> {{ link }}
+👤 <b>Имя:</b> {{ name | e }}
+✈️ <b>Telegram:</b> {{ tg | e }}
+{% if birthdate %}📅 <b>Дата рождения:</b> {{ birthdate | e }}
+{% endif %}{% if city %}🏙️ <b>Город:</b> {{ city | e }}
+{% endif %}{% if university %}🎓 <b>Университет:</b> {{ university | e }}
+{% endif %}{% if github %}💻 <b>GitHub:</b> {{ github | e }}
+{% endif %}{% if experience %}
+
+💼 <b>Опыт:</b>
+<i>{{ experience | e }}</i>
+{% endif %}{% if expectations %}
+
+🎯 <b>Ожидания:</b>
+<i>{{ expectations | e }}</i>
+{% endif %}
