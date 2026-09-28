@@ -13,7 +13,7 @@ from app.logger import logger
 jinja_env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
 telegram_template = jinja_env.get_template("telegram_msg.j2")
 
-is_production = settings.enironment == "production"
+is_production = settings.environment == "production"
 
 app = FastAPI(
     title="Registration API devgardencc",
