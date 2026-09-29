@@ -58,11 +58,13 @@ async def register_user(data: RegisterRequest, background_tasks: BackgroundTasks
     current_time = datetime.now()
     formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
 
-    row_to_insert = [formatted_time, *data.model_dump().values()]
+    row_to_insert = [formatted_time, *data.model_dump().values(), "⏳ Ожидает"]
 
     try:
-        await run_in_threadpool(gs_service.append_row, row_to_insert)
-        logger.info(f"Запись успешно добавлена в таблицу для {data.name}")
+        row_index = await run_in_threadpool(gs_service.append_row, row_to_insert)
+        logger.info(
+            f"Запись успешно добавлена в таблицу для {data.name} (строка #{row_index})"
+        )
     except Exception as e:
         logger.error(
             f"Критическая ошибка: запись НЕ создана. Уведомление не будет отправлено. Ошибка: {e}"
@@ -75,8 +77,65 @@ async def register_user(data: RegisterRequest, background_tasks: BackgroundTasks
     template_data = {**data.model_dump(), "registered_at": formatted_time}
 
     message_text = telegram_template.render(**template_data)
-        
-   
 
-    background_tasks.add_task(tg_service.send_message, message_text)
+    background_tasks.add_task(
+        tg_service.send_message_with_buttons, message_text, row_index
+    )
     return RegisterResponse(name=data.name, created_at=current_time)
+
+
+@app.post("/api/telegram-webhook", tags=["Telegram"])
+async def telegram_webhook(update: dict, background_tasks: BackgroundTasks):
+    """Эндпоинт для обработки кликов по кнопкам из Telegram"""
+    callback_query = update.get("callback_query")
+    if not callback_query:
+        return {"status": "ok"}
+
+    callback_id = callback_query.get("id")
+    data = callback_query.get("data", "")
+    message = callback_query.get("message", {})
+    chat_id = message.get("chat", {}).get("id")
+    message_id = message.get("message_id")
+    original_text = message.get("text", "")
+    from_user = callback_query.get("from", {})
+    admin_name = from_user.get("username") or from_user.get("first_name", "Админ")
+
+    if ":" not in data:
+        return {"status": "ok"}
+
+    action, row_str = data.split(":", 1)
+    if not row_str.isdigit():
+        return {"status": "ok"}
+
+    row_index = int(row_str)
+
+    if action == "approve":
+        new_status = "✅ Одобрено"
+        status_label = f"\n\n<b>Статус:</b> ✅ Одобрено (админом @{admin_name})"
+        background_tasks.add_task(
+            run_in_threadpool, gs_service.update_status, row_index, new_status
+        )
+        updated_text = original_text + status_label
+        background_tasks.add_task(
+            tg_service.edit_message_text, chat_id, message_id, updated_text
+        )
+        background_tasks.add_task(
+            tg_service.answer_callback_query, callback_id, "Заявка одобрена!"
+        )
+
+    elif action == "reject":
+        new_status = "❌ Отклонено"
+        status_label = f"\n\n<b>Статус:</b> ❌ Отклонено (админом @{admin_name})"
+        background_tasks.add_task(
+            run_in_threadpool, gs_service.update_status, row_index, new_status
+        )
+        updated_text = original_text + status_label
+        background_tasks.add_task(
+            tg_service.edit_message_text, chat_id, message_id, updated_text
+        )
+        background_tasks.add_task(
+            tg_service.answer_callback_query, callback_id, "Заявка отклонена."
+        )
+
+    return {"status": "ok"}
+
